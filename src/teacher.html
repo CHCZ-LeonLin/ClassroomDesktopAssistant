@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班级桌面助手 v1.2.3-Beta.1 - 教师端</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #f97316;
+      --primary-light: #fb923c;
+      --primary-dark: #ea580c;
+      --secondary: #0891b2;
+      --danger: #e17055;
+      --bg: #faf8f5;
+      --card-bg: #ffffff;
+      --sidebar-bg: #1c1917;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e7e5e4;
+      --shadow: 0 4px 24px rgba(249,115,22,0.10);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      font-optical-sizing: auto;
+      font-variant-ligatures: common-ligatures;
+      font-kerning: normal;
+    }
+
+    /* ========== 侧边栏 ========== */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(249,115,22,0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; padding: 10px 12px 24px; }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #f97316, #fb923c);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.4);
+      flex-shrink: 0;
+    }
+    .logo-text h1 { color: #fff; font-size: 15px; font-weight: 700; }
+    .logo-text p { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 2px; }
+
+    .nav-section {
+      font-size: 10px; color: rgba(255,255,255,0.25);
+      text-transform: uppercase; letter-spacing: 1.5px;
+      padding: 0 12px; margin: 12px 0 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 12px; border-radius: 10px;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      margin-bottom: 3px; font-size: 13.5px;
+      position: relative;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.08); color: #fff;
+      transform: translateX(4px);
+    }
+    .nav-item:hover .nav-icon {
+      transform: scale(1.15);
+    }
+    .nav-item.active {
+      background: rgba(249,115,22,0.2);
+      color: #fff;
+      box-shadow: inset 3px 0 0 var(--primary);
+      transform: none;
+    }
+    .nav-item.active .nav-icon {
+      animation: iconPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    .nav-icon {
+      font-size: 16px; width: 20px; text-align: center;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* 滑动指示器 */
+    .nav-indicator {
+      position: absolute;
+      left: 0;
+      width: 3px;
+      height: 38px;
+      background: #f97316;
+      border-radius: 0 4px 4px 0;
+      transition: top 0.35s cubic-bezier(0.4,0,0.2,1);
+      z-index: 10;
+      box-shadow: 0 0 10px rgba(249,115,22,0.6);
+    }
+
+    .sidebar-clock {
+      margin-top: auto;
+      text-align: center;
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .sidebar-clock #clock-time {
+      color: var(--primary); font-size: 28px; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .sidebar-clock #clock-date {
+      color: rgba(255,255,255,0.3); font-size: 11px; margin-top: 2px;
+    }
+
+    /* ========== 主内容 ========== */
+    .main { flex: 1; overflow-y: auto; padding: 28px 36px; }
+
+    .page { display: none; }
+    .page.active { display: block; animation: fade 0.3s cubic-bezier(0.4,0,0.2,1); }
+    @keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .page-title h2 { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.3; letter-spacing: -0.2px; }
+    .page-title p { font-size: 13px; color: var(--text-light); margin-top: 4px; letter-spacing: 0.2px; }
+
+    /* ========== 导出提示 ========== */
+    .export-hint {
+      background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(251,146,60,0.08));
+      border: 1px solid rgba(249,115,22,0.25);
+      border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px; color: var(--text);
+    }
+    .export-hint .icon { font-size: 20px; }
+
+    /* ========== 课程表 ========== */
+    .schedule-wrap {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .sch-head {
+      display: grid;
+      grid-template-columns: 100px repeat(7, 1fr);
+      background: #f5f5f4;
+      border-bottom: 2px solid var(--border);
+    }
+    .sch-head-cell {
+      padding: 12px 6px; text-align: center;
+      font-size: 13px; font-weight: 600; color: var(--primary-dark);
+    }
+    .sch-head-cell .sub-day { font-size: 10px; color: var(--text-light); font-weight: 400; }
+
+    .sch-row {
+      display: grid;
+      grid-template-columns: 100px repeat(7, 1fr);
+      border-bottom: 1px solid var(--border);
+      min-height: 64px;
+    }
+    .sch-time {
+      padding: 8px 6px; text-align: center;
+      background: #f5f5f4;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .sch-period-num { font-size: 12px; font-weight: 600; color: var(--primary-dark); }
+    .sch-period-time { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+
+    .sch-cell {
+      border-right: 1px solid var(--border);
+      padding: 4px; cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .sch-cell:hover { background: rgba(249,115,22,0.04); }
+    .sch-cell.today-col { background: rgba(249,115,22,0.03); }
+
+    .cls-block {
+      width: 100%; height: 100%;
+      border-radius: 8px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 4px 6px;
+      color: #fff; font-size: 12px;
+      position: relative;
+      cursor: default;
+    }
+    .cls-name { font-weight: 600; font-size: 13px; }
+    .cls-teacher { font-size: 10px; opacity: 0.85; margin-top: 1px; }
+    .cls-room { font-size: 10px; opacity: 0.7; }
+    .cls-del {
+      position: absolute; top: 2px; right: 4px;
+      background: rgba(0,0,0,0.2); color: #fff;
+      border: none; border-radius: 50%;
+      width: 16px; height: 16px; font-size: 10px;
+      cursor: pointer; display: none;
+      line-height: 16px; text-align: center;
+    }
+    .cls-block:hover .cls-del { display: flex; align-items: center; justify-content: center; }
+
+    .sch-add-hint {
+      color: var(--text-light); font-size: 18px; opacity: 0.3;
+      transition: opacity 0.2s;
+    }
+    .sch-cell:hover .sch-add-hint { opacity: 0.6; }
+
+    /* ========== 科目管理 ========== */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .subj-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .subj-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(249,115,22,0.15); }
+    .subj-bar { width: 100%; height: 4px; border-radius: 2px; margin-bottom: 12px; }
+    .subj-name { font-size: 16px; font-weight: 700; color: var(--text); }
+    .subj-teacher { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+    .subj-actions { margin-top: 12px; }
+
+    /* ========== 按钮 ========== */
+    .btn {
+      border: none; border-radius: 8px;
+      padding: 8px 18px; font-size: 13px; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--primary); color: #fff;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ghost {
+      background: transparent; color: var(--text-light);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* ========== 模态框 ========== */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; backdrop-filter: blur(2px);
+    }
+    .overlay.show { display: flex; animation: fade 0.2s; }
+    .modal {
+      background: #fff; border-radius: 18px;
+      padding: 28px; width: 440px; max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; color: var(--text-light); margin-bottom: 5px; }
+    .form-ctrl {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; font-family: inherit; color: var(--text);
+      transition: border 0.2s;
+    }
+    .form-ctrl:focus { outline: none; border-color: var(--primary); }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+    /* ========== 颜色选择 ========== */
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-dot {
+      width: 26px; height: 26px; border-radius: 50%;
+      cursor: pointer; border: 3px solid transparent;
+      transition: all 0.18s;
+    }
+    .color-dot.sel { border-color: #2d3436; transform: scale(1.2); }
+
+    /* ========== Toast ========== */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #1c1917; color: #fff;
+      padding: 11px 22px; border-radius: 10px;
+      font-size: 13px; z-index: 9999;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.28s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ========== 选中文本 ========== */
+    ::selection {
+      background: rgba(249, 115, 22, 0.22);
+      color: var(--text);
+    }
+
+    /* ========== 滚动条 ========== */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.22); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(249,115,22,0.40); }
+  </style>
+</head>
+<body>
+
+<!-- ========== 侧边栏 ========== -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">👨‍🏫</div>
+    <div class="logo-text">
+      <h1>班级桌面助手</h1>
+      <p>教师端</p>
+    </div>
+  </div>
+
+  <span class="nav-section">课表管理</span>
+  <div class="nav-indicator" id="nav-indicator"></div>
+  <div class="nav-item active" data-page="schedule"><span class="nav-icon">📅</span>课程表编排</div>
+  <div class="nav-item" data-page="subjects"><span class="nav-icon">🎨</span>科目管理</div>
+
+  <div class="sidebar-clock">
+    <div id="clock-time">00:00</div>
+    <div id="clock-date">—</div>
+  </div>
+</div>
+
+<!-- ========== 主内容 ========== -->
+<div class="main">
+
+  <!-- 导出提示 -->
+  <div class="export-hint">
+    <span class="icon">💡</span>
+    <span>编排完成后，点击顶部菜单 <b>导出 → 导出课表数据</b>（或按 Ctrl+E），将文件发送给学生导入即可。</span>
+  </div>
+
+  <!-- 课程表 -->
+  <div class="page active" id="page-schedule">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>📅 课程表编排</h2>
+        <p>点击空白格子添加课程，悬停课程块可删除</p>
+      </div>
+    </div>
+
+    <div class="schedule-wrap">
+      <div class="sch-head">
+        <div class="sch-head-cell">节次</div>
+        <div class="sch-head-cell">周一<br><span class="sub-day">MON</span></div>
+        <div class="sch-head-cell">周二<br><span class="sub-day">TUE</span></div>
+        <div class="sch-head-cell">周三<br><span class="sub-day">WED</span></div>
+        <div class="sch-head-cell">周四<br><span class="sub-day">THU</span></div>
+        <div class="sch-head-cell">周五<br><span class="sub-day">FRI</span></div>
+        <div class="sch-head-cell">周六<br><span class="sub-day">SAT</span></div>
+        <div class="sch-head-cell">周日<br><span class="sub-day">SUN</span></div>
+      </div>
+      <div id="sch-body"></div>
+    </div>
+  </div>
+
+  <!-- 科目管理 -->
+  <div class="page" id="page-subjects">
+    <div class="page-header">
+      <div class="page-title">
+        <h2>🎨 科目管理</h2>
+        <p>管理科目颜色与教师信息</p>
+      </div>
+      <button class="btn btn-primary" onclick="openSubjModal()">➕ 添加科目</button>
+    </div>
+    <div id="subj-grid" class="subjects-grid"></div>
+  </div>
+
+</div>
+
+<!-- ========== 添加课程模态框 ========== -->
+<div class="overlay" id="m-cls">
+  <div class="modal">
+    <div class="modal-title">📅 添加课程</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">星期</label>
+        <select class="form-ctrl" id="cls-day">
+          <option value="0">周一</option><option value="1">周二</option>
+          <option value="2">周三</option><option value="3">周四</option>
+          <option value="4">周五</option><option value="5">周六</option>
+          <option value="6">周日</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">节次</label>
+        <select class="form-ctrl" id="cls-period">
+          <option value="1">第1节 08:00-08:45</option>
+          <option value="2">第2节 08:55-09:40</option>
+          <option value="3">第3节 10:00-10:45</option>
+          <option value="4">第4节 10:55-11:40</option>
+          <option value="5">第5节 13:30-14:15</option>
+          <option value="6">第6节 14:25-15:10</option>
+          <option value="7">第7节 15:30-16:15</option>
+          <option value="8">第8节 16:25-17:10</option>
+          <option value="9">第9节 19:00-19:45</option>
+          <option value="10">第10节 19:55-20:40</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目</label>
+      <select class="form-ctrl" id="cls-subj"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">教师（选填）</label>
+        <input class="form-ctrl" id="cls-teacher" type="text" placeholder="教师姓名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">教室（选填）</label>
+        <input class="form-ctrl" id="cls-room" type="text" placeholder="如：301">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-cls')">取消</button>
+      <button class="btn btn-primary" onclick="saveCls()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 添加科目模态框 ========== -->
+<div class="overlay" id="m-subj">
+  <div class="modal">
+    <div class="modal-title">🎨 添加科目</div>
+    <div class="form-group">
+      <label class="form-label">科目名称</label>
+      <input class="form-ctrl" id="subj-name" type="text" placeholder="例：数学">
+    </div>
+    <div class="form-group">
+      <label class="form-label">教师（选填）</label>
+      <input class="form-ctrl" id="subj-teacher" type="text" placeholder="教师姓名">
+    </div>
+    <div class="form-group">
+      <label class="form-label">科目颜色</label>
+      <div class="color-picker" id="color-picker"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-subj')">取消</button>
+      <button class="btn btn-primary" onclick="saveSubj()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== 常量 ===================== */
+const SK = { SCH: 'ch_sch', SUBJ: 'ch_subj' };
+
+const COLORS = [
+  '#00cec9','#6c5ce7','#e17055','#fd79a8','#fdcb6e',
+  '#00b894','#0984e3','#a29bfe','#fd63a0','#74b9ff',
+  '#55efc4','#e84393','#6ab04c','#eb4d4b','#f9ca24'
+];
+
+const PERIODS = [
+  { n:1,  t:'08:00-08:45' },
+  { n:2,  t:'08:55-09:40' },
+  { n:3,  t:'10:00-10:45' },
+  { n:4,  t:'10:55-11:40' },
+  { n:5,  t:'13:30-14:15' },
+  { n:6,  t:'14:25-15:10' },
+  { n:7,  t:'15:30-16:15' },
+  { n:8,  t:'16:25-17:10' },
+  { n:9,  t:'19:00-19:45' },
+  { n:10, t:'19:55-20:40' },
+];
+
+const WEEKDAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+
+/* ===================== 数据 ===================== */
+let schs = [], subjs = [];
+let selColor = COLORS[0];
+
+function load() {
+  try { schs  = JSON.parse(localStorage.getItem(SK.SCH))  || []; } catch { schs  = []; }
+  try { subjs = JSON.parse(localStorage.getItem(SK.SUBJ)) || null; } catch { subjs = null; }
+  if (!subjs) {
+    subjs = defaultSubjs();
+    save(SK.SUBJ, subjs);
+  }
+}
+
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function defaultSubjs() {
+  return [
+    { id:'d1', name:'语文',   teacher:'', color:'#e17055' },
+    { id:'d2', name:'数学',   teacher:'', color:'#6c5ce7' },
+    { id:'d3', name:'英语',   teacher:'', color:'#0984e3' },
+    { id:'d4', name:'物理',   teacher:'', color:'#00cec9' },
+    { id:'d5', name:'化学',   teacher:'', color:'#fd79a8' },
+    { id:'d6', name:'生物',   teacher:'', color:'#00b894' },
+    { id:'d7', name:'历史',   teacher:'', color:'#fdcb6e' },
+    { id:'d8', name:'地理',   teacher:'', color:'#74b9ff' },
+    { id:'d9', name:'政治',   teacher:'', color:'#a29bfe' },
+  ];
+}
+
+/* ===================== 工具 ===================== */
+function lighten(hex, amt) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, (n >> 16) + amt);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
+  const b = Math.min(255, (n & 0xff) + amt);
+  return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+function getSubj(id) { return subjs.find(s => s.id === id); }
+
+/* ===================== 导航 ===================== */
+function updateNavIndicator() {
+  const active = document.querySelector('.nav-item.active');
+  const indicator = document.getElementById('nav-indicator');
+  if (active && indicator) {
+    indicator.style.top = (active.offsetTop + 4) + 'px';
+    indicator.style.height = (active.offsetHeight - 8) + 'px';
+  }
+}
+
+function gotoPage(page) {
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.page').forEach(el =>
+    el.classList.toggle('active', el.id === 'page-' + page));
+  updateNavIndicator();
+  if (page === 'schedule') renderSch();
+  if (page === 'subjects') renderSubjs();
+}
+
+document.querySelectorAll('.nav-item').forEach(el =>
+  el.addEventListener('click', () => gotoPage(el.dataset.page)));
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(updateNavIndicator, 100);
+});
+
+/* ===================== 时钟 ===================== */
+const WD = ['周日','周一','周二','周三','周四','周五','周六'];
+
+function tick() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock-time').textContent = h + ':' + m;
+  const ds = now.toLocaleDateString('zh-CN', { month:'long', day:'numeric' });
+  document.getElementById('clock-date').textContent = ds + ' ' + WD[now.getDay()];
+}
+setInterval(tick, 1000);
+tick();
+
+/* ===================== 课程表 ===================== */
+function renderSch() {
+  const jsDay  = new Date().getDay();
+  const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
+  const body = document.getElementById('sch-body');
+  body.innerHTML = '';
+
+  PERIODS.forEach(period => {
+    const row = document.createElement('div');
+    row.className = 'sch-row';
+
+    const tc = document.createElement('div');
+    tc.className = 'sch-time';
+    tc.innerHTML = `<span class="sch-period-num">第${period.n}节</span><span class="sch-period-time">${period.t}</span>`;
+    row.appendChild(tc);
+
+    for (let day = 0; day < 7; day++) {
+      const cell = document.createElement('div');
+      cell.className = 'sch-cell' + (day === todayIdx ? ' today-col' : '');
+
+      const cls = schs.find(s => s.day === day && s.period === period.n);
+      if (cls) {
+        cell.classList.add('has-cls');
+        const subj  = getSubj(cls.subjectId);
+        const color = subj ? subj.color : '#aaa';
+        const block = document.createElement('div');
+        block.className = 'cls-block';
+        block.style.background = `linear-gradient(145deg, ${color}, ${lighten(color, 28)})`;
+        block.innerHTML = `
+          <div class="cls-name">${subj ? subj.name : '?'}</div>
+          ${cls.teacher ? `<div class="cls-teacher">${cls.teacher}</div>` : ''}
+          ${cls.room    ? `<div class="cls-room">${cls.room}</div>`     : ''}
+          <button class="cls-del" onclick="event.stopPropagation();delCls('${cls.id}')">✕</button>`;
+        cell.appendChild(block);
+      } else {
+        const hint = document.createElement('div');
+        hint.className = 'sch-add-hint';
+        hint.textContent = '+';
+        cell.appendChild(hint);
+        cell.addEventListener('click', () => openClsModal(day, period.n));
+      }
+
+      row.appendChild(cell);
+    }
+    body.appendChild(row);
+  });
+}
+
+function openClsModal(day, period) {
+  document.getElementById('cls-day').value    = day;
+  document.getElementById('cls-period').value = period;
+  document.getElementById('cls-teacher').value = '';
+  document.getElementById('cls-room').value    = '';
+  const sel = document.getElementById('cls-subj');
+  sel.innerHTML = subjs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  openModal('m-cls');
+}
+
+function saveCls() {
+  const day    = parseInt(document.getElementById('cls-day').value);
+  const period = parseInt(document.getElementById('cls-period').value);
+  const idx = schs.findIndex(s => s.day === day && s.period === period);
+  if (idx >= 0) schs.splice(idx, 1);
+  schs.push({
+    id: uid(), day, period,
+    subjectId: document.getElementById('cls-subj').value,
+    teacher: document.getElementById('cls-teacher').value.trim(),
+    room:    document.getElementById('cls-room').value.trim()
+  });
+  save(SK.SCH, schs);
+  closeModal('m-cls');
+  renderSch();
+  showToast('✅ 课程已添加');
+}
+
+function delCls(id) {
+  schs = schs.filter(s => s.id !== id);
+  save(SK.SCH, schs);
+  renderSch();
+  showToast('🗑️ 已删除课程');
+}
+
+/* ===================== 科目 ===================== */
+function renderSubjs() {
+  document.getElementById('subj-grid').innerHTML = subjs.map(s => `
+    <div class="subj-card">
+      <div class="subj-bar" style="background:${s.color}"></div>
+      <div class="subj-name">${s.name}</div>
+      <div class="subj-teacher">${s.teacher ? '👨‍🏫 ' + s.teacher : '<span style="opacity:.3">暂无教师</span>'}</div>
+      <div class="subj-actions">
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="delSubj('${s.id}')">删除</button>
+      </div>
+    </div>`).join('');
+}
+
+function openSubjModal() {
+  document.getElementById('subj-name').value    = '';
+  document.getElementById('subj-teacher').value = '';
+  selColor = COLORS[0];
+  document.getElementById('color-picker').innerHTML =
+    COLORS.map((c, i) =>
+      `<div class="color-dot ${i===0?'sel':''}" style="background:${c}" data-c="${c}" onclick="pickColor('${c}',this)"></div>`
+    ).join('');
+  openModal('m-subj');
+}
+
+function pickColor(c, el) {
+  selColor = c;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function saveSubj() {
+  const name = document.getElementById('subj-name').value.trim();
+  if (!name) { showToast('⚠️ 请输入科目名称'); return; }
+  subjs.push({ id: uid(), name, teacher: document.getElementById('subj-teacher').value.trim(), color: selColor });
+  save(SK.SUBJ, subjs);
+  closeModal('m-subj');
+  renderSubjs();
+  showToast('✅ 科目已添加');
+}
+
+function delSubj(id) {
+  subjs = subjs.filter(s => s.id !== id);
+  save(SK.SUBJ, subjs);
+  renderSubjs();
+  showToast('🗑️ 已删除科目');
+}
+
+/* ===================== 模态框 & Toast ===================== */
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.overlay').forEach(ov =>
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('show'); }));
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ===================== 初始化 ===================== */
+load();
+renderSch();
+renderSubjs();
+</script>
+</body>
+</html>

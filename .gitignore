@@ -1,0 +1,24 @@
+# 构建产物
+dist/
+src/dist/
+build/
+src/build/
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE / 工具链
+.codeartsdoer/
+node_modules/
+.vscode/
+.idea/
+
+# 运行时本地配置与数据（可能保存 Token / 密码）
+app_settings.json
+teacher_settings.json
+_size_report.txt

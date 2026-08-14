@@ -1,0 +1,5 @@
+# 班级桌面助手 - Python 依赖
+# Python >= 3.10 推荐 3.12 / 3.13
+# PySide6 自带 QtWebEngine，无需单独安装
+
+PySide6>=6.6.0,<6.9
