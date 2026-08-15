@@ -1,9 +1,11 @@
-# 班级桌面助手
+# 班级桌面助手（Classroom Desktop Assistant）
 
 > 面向教学场景的轻量级桌面应用，学生端与教师端协同工作，覆盖课表编排、作业记录与数据流转。
 
 **版本**：v1.2.3-Beta.1  
 **作者**：CHCZ-LeonLin、FENG
+
+> 下载预编译版本：[GitHub Releases](https://github.com/CHCZ-LeonLin/ClassroomDesktopAssistant/releases)
 
 ---
 
@@ -39,14 +41,14 @@
 ## 项目结构
 
 ```
-班级桌面助手_v1.2.3-Beta.1/
+ClassroomDesktopAssistant/
 ├── README.md               # 项目说明
 ├── LICENSE.md              # 开源许可
 ├── .gitignore              # 忽略构建产物与本地配置
-└── 源码/                   # 完整源代码
+└── src/                    # 完整源代码
     ├── app.py              # 学生端主程序
     ├── teacher_app.py      # 教师端主程序
-    ├── 班级桌面助手.html   # 学生端界面
+    ├── student.html        # 学生端界面
     ├── teacher.html        # 教师端界面
     ├── build.spec          # PyInstaller 打包配置
     ├── requirements.txt    # Python 依赖
@@ -57,23 +59,27 @@
     └── teacher.ico / teacher.png
 ```
 
-打包产物输出到 `源码/dist/`（学生端 / 教师端），该目录已被 `.gitignore` 忽略。
+打包产物输出到 `src/dist/`（学生端 / 教师端），该目录已被 `.gitignore` 忽略。
 
 ---
 
 ## 快速开始
 
-### 使用预编译版本
+### 使用预编译版本（推荐）
 
-1. 下载并解压压缩包
-2. 运行学生端：`src/dist/student/ClassroomDesktopAssistant.exe`
-3. 运行教师端：`src/dist/teacher/ClassroomDesktopAssistant-Teacher.exe`
+1. 前往 [GitHub Releases](https://github.com/CHCZ-LeonLin/ClassroomDesktopAssistant/releases) 下载对应压缩包：
+   - 学生端：`ClassroomDesktopAssistant-Student-v1.2.3-Beta.1-win64.zip`
+   - 教师端：`ClassroomDesktopAssistant-Teacher-v1.2.3-Beta.1-win64.zip`
+2. 解压压缩包
+3. 运行目录内的 exe（需与同级的 `_internal` 目录放在一起）：
+   - 学生端：`ClassroomDesktopAssistant.exe`
+   - 教师端：`ClassroomDesktopAssistant-Teacher.exe`
 
 ### 从源码运行
 
 ```bash
 # 进入源码目录
-cd 源码
+cd src
 
 # 安装依赖
 pip install -r requirements.txt
@@ -90,7 +96,7 @@ python teacher_app.py
 ### 打包为可执行文件
 
 ```bash
-cd 源码
+cd src
 pyinstaller --clean --noconfirm build.spec
 ```
 
